@@ -4,11 +4,12 @@ import Colors from '../constants/Colors';
 import ImagePicker from 'react-native-image-picker';
 
 const ImgPicker = props => {
+
     const [pickedImage, setPickedImage] = useState();
 
     const verifyPermissions = async () => {
         try {
-          await PermissionsAndroid.requestMultiple
+            await PermissionsAndroid.requestMultiple
             ([PermissionsAndroid.PERMISSIONS.CAMERA, PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE, PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE]);
             if ((await PermissionsAndroid.check('android.permission.CAMERA')) &&
                 (await PermissionsAndroid.check('android.permission.CAMERA')) &&
@@ -35,13 +36,11 @@ const ImgPicker = props => {
             return;
         }
 
-        console.log('gggg');
-
         const options = {
             title: 'Select Place Image',
             storageOptions: {
                 skipBackup: true,
-                path: 'Pictures',
+                path: 'images',
             },
         };
 
@@ -55,15 +54,14 @@ const ImgPicker = props => {
             } else if (response.customButton) {
                 console.log('User tapped custom button: ', response.customButton);
             } else {
-                const source = {uri: response.uri};
-                console.log('source', source);
-
+               // setPickedImage(response.uri);
+                //console.log('data', response.data);
+                //const source = {uri: response.uri};
                 // You can also display the image using data:
-                // const source = { uri: 'data:image/jpeg;base64,' + response.data };
-
-                /*this.setState({
-                    avatarSource: source,
-                });*/
+                /* const source = { uri: 'data:image/jpeg;base64,' + response.data };
+                console.log("source",source);*/
+                setPickedImage(response.uri);
+                props.onImageTaken(response.uri);
             }
         });
     };
@@ -71,8 +69,8 @@ const ImgPicker = props => {
     return (
         <View style={styles.imagePicker}>
             <View style={styles.imagePreview}>
-                <Text>No image picked yet. </Text>
-                {/*<Image style={styles.image} source={}/>*/}
+                {!pickedImage ? (<Text>No image picked yet. </Text>) :
+                    (<Image style={styles.image} source={{uri: pickedImage}}/>)}
             </View>
             <Button
                 title={'Take Image'}
