@@ -3,12 +3,15 @@ import {View, Text, StyleSheet, ScrollView, TextInput, Button, Alert} from 'reac
 import Colors from '../constants/Colors';
 import * as placesActions from '../store/actions/places';
 import {useDispatch} from 'react-redux';
+import ImagePicker from '../components/ImagePicker';
 
 const NewPlaceScreen = props => {
 
     const [titleValue, setTitleValue] = useState('');
 
     const dispatch = useDispatch();
+
+
 
     const titleChangeHandler = text => {
         //you could add validation
@@ -17,7 +20,7 @@ const NewPlaceScreen = props => {
 
     const savePlaceHandler = () => {
         if (titleValue.trim().length < 3) {
-            Alert.alert('Alert', 'Title must be minimum 3 characters', 'Ok');
+            Alert.alert('Alert', 'Title must be minimum 3 characters', [{text: 'Okay'}]);
             return;
         }
         dispatch(placesActions.addPlace(titleValue));
@@ -31,6 +34,8 @@ const NewPlaceScreen = props => {
                 <TextInput style={styles.textInput}
                            onChangeText={titleChangeHandler}
                            value={titleValue}/>
+                <ImagePicker/>
+
                 <Button title={'Save Place'} color={Colors.primary} onPress={savePlaceHandler}/>
             </View>
         </ScrollView>
