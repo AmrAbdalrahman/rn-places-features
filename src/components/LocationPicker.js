@@ -1,22 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     View,
     Button,
     Text,
     ActivityIndicator,
     Alert,
-    StyleSheet, PermissionsAndroid,
+    StyleSheet, PermissionsAndroid, Dimensions,
 } from 'react-native';
-import MapView from "react-native-maps";
-
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+/*import Geolocation from 'react-native-geolocation-service';*/
 import Colors from '../constants/Colors';
-/*import MapPreview from './MapPreview';*/
+/*
+import MapPreview from './MapPreview';
+*/
 
+/*interface IGeolocation {
+    latitude: number;
+    longitude: number;
+}*/
 const LocationPicker = props => {
     const [isFetching, setIsFetching] = useState(false);
-    const [pickedLocation, setPickedLocation] = useState();
+    const [pickedLocation, setPickedLocation] = useState({
+            latitude: 37.78825,
+            longitude: -122.4324,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+        },
+    );
 
-    const mapPickedLocation = props.navigation.getParam('pickedLocation');
+    /*const mapPickedLocation = props.navigation.getParam('pickedLocation');
 
     const { onLocationPicked } = props;
 
@@ -25,17 +37,33 @@ const LocationPicker = props => {
             setPickedLocation(mapPickedLocation);
             onLocationPicked(mapPickedLocation);
         }
-    }, [mapPickedLocation, onLocationPicked]);
+    }, [mapPickedLocation, onLocationPicked]);*/
 
-   /* const verifyPermissions = async () => {
+    /*useEffect(() => {
+        Geolocation.getCurrentPosition(
+            position => {
+                const {latitude, longitude} = position.coords;
+                setPickedLocation({
+                    latitude,
+                    longitude,
+                });
+            },
+            error => {
+                console.log(error.code, error.message);
+            },
+            {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+        );
+    }, []);*/
+
+    const verifyPermissions = async () => {
         try {
-            await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.LOCATION);
+            await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
 
-            if ((await PermissionsAndroid.check('android.permission.'))) {
-                console.log('You can use the camera');
+            if (await PermissionsAndroid.check('android.permission.ACCESS_FINE_LOCATION')) {
+                console.log('You can use the location');
                 return true;
             } else {
-                console.log('Camera permission denied');
+                console.log('Location permission denied');
                 Alert.alert(
                     'Insufficient permissions!',
                     'You need to grant location permissions to use this app.',
@@ -46,35 +74,42 @@ const LocationPicker = props => {
         } catch (err) {
             console.warn(err);
         }
-    };*/
+    };
 
-    const getLocationHandler = async () => {
+    const getLocationHandler = async (coordinate) => {
         const hasPermission = await verifyPermissions();
         if (!hasPermission) {
             return;
         }
 
-        try {
-            setIsFetching(true);
-            const location = await Location.getCurrentPositionAsync({
-                timeout: 5000
-            });
-            setPickedLocation({
-                lat: location.coords.latitude,
-                lng: location.coords.longitude
-            });
-            props.onLocationPicked({
-                lat: location.coords.latitude,
-                lng: location.coords.longitude
-            });
-        } catch (err) {
-            Alert.alert(
-                'Could not fetch location!',
-                'Please try again later or pick a location on the map.',
-                [{ text: 'Okay' }]
-            );
-        }
-        setIsFetching(false);
+        console.log('get location');
+
+        /*this.props.onLocationPick({
+            latitude: coords.latitude,
+            longitude: coords.longitude
+        });*/
+
+        // try {
+        //     setIsFetching(true);
+        //     const location = await MapView.getCurrentPositionAsync({
+        //         timeout: 5000
+        //     });
+        //     setPickedLocation({
+        //         lat: location.coords.latitude,
+        //         lng: location.coords.longitude
+        //     });
+        //     props.onLocationPicked({
+        //         lat: location.coords.latitude,
+        //         lng: location.coords.longitude
+        //     });
+        // } catch (err) {
+        //     Alert.alert(
+        //         'Could not fetch location!',
+        //         'Please try again later or pick a location on the map.',
+        //         [{ text: 'Okay' }]
+        //     );
+        // }
+        // setIsFetching(false);
     };
 
     const pickOnMapHandler = () => {
@@ -83,17 +118,33 @@ const LocationPicker = props => {
 
     return (
         <View style={styles.locationPicker}>
-            <MapPreview
-                style={styles.mapPreview}
-                location={pickedLocation}
-                onPress={pickOnMapHandler}
+            <MapView style={styles.map}
+                     provider={PROVIDER_GOOGLE}
+                     initialRegion={pickedLocation}
+                     onRegionChange={region => {
+                         setPickedLocation({
+                             latitude: region.latitude,
+                             longitude: region.longitude,
+                         });
+                     }}
+                     onRegionChangeComplete={region => {
+                         setPickedLocation({
+                             latitude: region.latitude,
+                             longitude: region.longitude,
+                         });
+                     }}
+
             >
-                {isFetching ? (
-                    <ActivityIndicator size="large" color={Colors.primary} />
-                ) : (
-                    <Text>No location chosen yet!</Text>
-                )}
-            </MapPreview>
+                <Marker
+                    coordinate={{
+                        latitude: pickedLocation.latitude,
+                        longitude: pickedLocation.longitude,
+                    }}
+                    title="this is a marker"
+                    description="this is a marker example"
+                />
+            </MapView>
+
             <View style={styles.actions}>
                 <Button
                     title="Get User Location"
@@ -112,20 +163,27 @@ const LocationPicker = props => {
 
 const styles = StyleSheet.create({
     locationPicker: {
-        marginBottom: 15
+        width: '100%',
+        alignItems: 'center',
     },
     mapPreview: {
         marginBottom: 10,
         width: '100%',
         height: 150,
         borderColor: '#ccc',
-        borderWidth: 1
+        borderWidth: 1,
     },
     actions: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        width: '100%'
-    }
+        width: '100%',
+        marginBottom: 20,
+    },
+    map: {
+        width: '100%',
+        height: 250,
+        marginBottom: 20,
+    },
 });
 
 export default LocationPicker;
